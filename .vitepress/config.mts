@@ -1,5 +1,6 @@
+// noinspection JSUnusedGlobalSymbols
+
 import { defineConfig } from 'vitepress'
-import { withPwa } from "@vite-pwa/vitepress";
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   lang: 'zh-CN', //语言，可选 en-US
