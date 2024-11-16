@@ -124,6 +124,10 @@ export default defineConfig({
     search: {
       provider: 'local'
     },
+    editLink: {
+      pattern: 'https://github.com/xin1201946/CRS-Docs/blob/master/:path', // 改成自己的仓库
+      text: '在GitHub编辑本页'
+    },
     sidebar: [
       {
         text: '文档',
