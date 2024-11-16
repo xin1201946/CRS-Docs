@@ -85,8 +85,8 @@ def start():
 
 #### 相关代码
 
-```
-@app.route(f'/{API["upload"]}', methods=['POST'])
+```python
+@app.route(f'/{API["your_server_api"]}', methods=['POST'])
 def upload_file():
     try:
         files = request.files
@@ -119,8 +119,8 @@ def upload_file():
 
 #### 相关代码
 
-```
-@app.route(f'/{API["test"]}')
+```python
+@app.route(f'/{API["your_server_api"]}')
 def test():
     return jsonify('You already connect the server now!')
 ```
@@ -141,8 +141,8 @@ def test():
 
 #### 相关代码
 
-```
-@app.route(f'/{API["test"]}')
+```python
+@app.route(f'/{API["your_server_api"]}')
 def test():
     return jsonify('You already connect the server now!')
 ```
