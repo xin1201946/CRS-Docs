@@ -9,7 +9,7 @@ hero:
   tagline: 
 
   image:
-    src: /pwa/Frame-384.png
+    src: /pwa/Frame-512.png
     alt: CRS Docs
     
   actions:
