@@ -134,7 +134,7 @@ export default defineConfig({
       }
     ],
     footer: {
-      message: 'Released under the MIT License.',
+      message: 'Casting Character Recognition System Docs',
       copyright: `Copyright © ${new Date().getFullYear()} present Canfeng`
       // 自动更新时间
       //copyright: `Copyright © 2019-${new Date().getFullYear()} present Evan You`,
