@@ -13,9 +13,11 @@ export default {
   extends: DefaultTheme,
 
   setup() {
-      const route = useRoute()
-    // Get frontmatter and route
+    const route = useRoute()
     const { frontmatter } = useData();
+    onMounted(() => {
+        mediumZoom('.main img', { background: 'var(--vp-c-bg)' });
+    });
 
     // giscus配置
     giscusTalk({
@@ -36,9 +38,9 @@ export default {
         true
     );
   },
+
   Layout: () => {
     return h(MyLayout, null, {
-
     })
   },
 } satisfies Theme

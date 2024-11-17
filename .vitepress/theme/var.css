@@ -1,28 +1,42 @@
 /* var.css */
 
-.medium-zoom-overlay {
-    z-index: 30;
-}
-
-.medium-zoom-image {
-    z-index: 9999 !important;
-}
-
 :root {
     --vp-c-brand-1: #18794e;
     --vp-c-brand-2: #299764;
     --vp-c-brand-3: #30a46c;
-}
-.image-src{
-    width:40%;
 }
 .dark {
     --vp-c-brand-1: #3dd68c;
     --vp-c-brand-2: #30a46c;
     --vp-c-brand-3: #298459;
 }
-/* 以前的vp-c-brand已弃用 */
+.medium-zoom-overlay {
+    z-index: 30;
+}
 
+.medium-zoom-image {
+    z-index: 9999 !important;/* 给的值是21，但是实测盖不住，直接999 */
+}
+
+/* 以前的vp-c-brand已弃用 */
+h1 {
+    background: -webkit-linear-gradient(10deg, #bd34fe 5%, #e43498 15%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+h2 {
+    text-decoration: underline; /* 这是添加下划线的正确设置方式 */
+    text-decoration-color: orangered; /* 可以设置下划线的颜色，这里设置为黑色 */
+    text-decoration-style: solid; /* 可以设置下划线的样式为实线等，这里设置为实线 */
+    text-decoration-thickness: 3px; /* 设置下划线的粗细为1px */
+}
+.title{
+    text-decoration:none !important;
+}
+.text{
+    text-decoration:none !important;
+}
 :root {
     /* hero标题渐变色 */
     --vp-home-hero-name-color: transparent;

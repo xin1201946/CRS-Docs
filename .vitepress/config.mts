@@ -7,6 +7,9 @@ export default defineConfig({
   title: "CRS Docs",
   description: "",
   cleanUrls:true,
+  sitemap: {
+    hostname: 'https://docs.1201946.xyz',
+  },
   base: '/',
   head: [
     ['link',{ rel: 'icon', href: '/pwa/Frame-72.png'}],
@@ -89,9 +92,10 @@ export default defineConfig({
     },
   },
   markdown: {
+    lineNumbers: true,
     image: {
       // 开启图片懒加载
-      lazyLoading: true
+      lazyLoading: true,
     },
     config: (md) => {
       // 创建 markdown-it 插件
@@ -123,6 +127,10 @@ export default defineConfig({
     ],
     search: {
       provider: 'local'
+    },
+    docFooter: {
+      prev: '上一页',
+      next: '下一页',
     },
     editLink: {
       pattern: 'https://github.com/xin1201946/CRS-Docs/blob/master/:path', // 改成自己的仓库

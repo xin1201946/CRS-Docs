@@ -1,12 +1,12 @@
 ---
 lang: zh-CN
-outline: [2,3]
+outline: [1,2,3,4]
 ---
 
 
 > **我们在项目中允许用户进行API定制以满足不同场景需求，设置教程参考[这里](/Docs/help-docs#用户端配置)**
 
-## 介绍
+# 介绍
 
 > 当API状态标记为`已弃用` 时，前端不再使用该API与后端进行通信，但该功能仍然保留，API仍可正常使用。
 >
@@ -22,7 +22,7 @@ outline: [2,3]
 | info       | 指定用于从服务器获取信息的 API         | 已弃用 |
 | isHTTPS    | 当前端获取服务器是否启用HTTPS时使用    | 已弃用 |
 
-## API 接入
+# API 接入
 
 > [!NOTE]
 >
@@ -30,13 +30,13 @@ outline: [2,3]
 
 
 
-### clear
+## clear
 
-#### 功能
+### 功能
 
 清空已上传图片
 
-#### 相关代码
+### 相关代码
 
 ```Python
 @app.route(f'/{API["your_server_api"]}')
@@ -46,7 +46,7 @@ def clear_files():
   return jsonify('Delete'), 200
 ```
 
-#### 使用方式
+### 使用方式
 
 方法：[GET,POST]
 
@@ -54,13 +54,13 @@ def clear_files():
 
 返回: Json , 200
 
-### start
+## start
 
-#### 功能
+### 功能
 
 开始处理已上传图片
 
-#### 相关代码
+### 相关代码
 
 ```Python
 @app.route(f'/{API["your_server_api"]}', methods=['GET', 'POST'])
@@ -69,7 +69,7 @@ def start():
     return jsonify([text]),200
 ```
 
-#### 使用方式
+### 使用方式
 
 方法：[GET,POST]
 
@@ -77,13 +77,13 @@ def start():
 
 返回: Json , 200
 
-### upload
+## upload
 
-#### 功能
+### 功能
 
 上传图片
 
-#### 相关代码
+### 相关代码
 
 ```python
 @app.route(f'/{API["your_server_api"]}', methods=['POST'])
@@ -103,7 +103,7 @@ def upload_file():
         return jsonify({'error': str(e)}), 500  # 500 indicates internal server error
 ```
 
-#### 使用方式
+### 使用方式
 
 方法：[POST]
 
@@ -111,13 +111,13 @@ def upload_file():
 
 返回: Json,200/500
 
-### test
+## test
 
-#### 功能
+### 功能
 
 测试与后端的连接状态
 
-#### 相关代码
+### 相关代码
 
 ```python
 @app.route(f'/{API["your_server_api"]}')
@@ -125,7 +125,7 @@ def test():
     return jsonify('You already connect the server now!')
 ```
 
-#### 使用方式
+### 使用方式
 
 方法：[GET，POST]
 
@@ -133,13 +133,13 @@ def test():
 
 返回: Json,200
 
-### info
+## info
 
-#### 功能
+### 功能
 
 获取服务器设置和已上传图片
 
-#### 相关代码
+### 相关代码
 
 ```python
 @app.route(f'/{API["your_server_api"]}')
@@ -147,7 +147,7 @@ def test():
     return jsonify('You already connect the server now!')
 ```
 
-#### 使用方式
+### 使用方式
 
 方法：[GET，POST]
 
