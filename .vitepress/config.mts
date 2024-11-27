@@ -121,6 +121,7 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: '/pwa/Frame-72.png',
+    editLinks: true,
     nav: [
       { text: '主页', link: '/' },
       { text: 'CCRS说明文档', link: '/Docs/help-docs' },
