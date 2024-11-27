@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   lang: 'zh-CN', //语言，可选 en-US
-  title: "CRS Docs",
+  title: "Canfeng Docs",
   description: "",
   cleanUrls:true,
   sitemap: {
@@ -20,9 +20,9 @@ export default defineConfig({
     includeManifestIcons: false, // 不包含清单图标
     manifest: {
       id: "/", // 清单 ID
-      name: "CRS Docs", // 应用名称
-      short_name: "CRS Doc", // 应用的短名称
-      description: "铸造字系统帮助文档", // 应用的描述
+      name: "Canfeng Docs", // 应用名称
+      short_name: "Canfeng Doc", // 应用的短名称
+      description: "残风的文档库", // 应用的描述
       theme_color: "#ffffff", // 主题颜色
       icons: [
         {
@@ -123,7 +123,8 @@ export default defineConfig({
     logo: '/pwa/Frame-72.png',
     nav: [
       { text: '主页', link: '/' },
-      { text: '说明文档', link: '/Docs/help-docs' }
+      { text: 'CCRS说明文档', link: '/Docs/help-docs' },
+      { text: 'Kylin-笔记', link: '/Docs/KylinDocs'}
     ],
     search: {
       provider: 'local'
@@ -138,18 +139,22 @@ export default defineConfig({
     },
     sidebar: [
       {
-        text: '文档',
+        text: 'CCRS文档',
         items: [
           { text: '说明文档', link: '/Docs/help-docs' },
-          { text: 'API 文档', link: '/Docs/api-docs' }
+          { text: 'API 文档', link: '/Docs/api-docs' },
+        ]
+      },
+      {
+        text: 'Kylin文档',
+        items: [
+          { text: 'Kylin-笔记', link: '/Docs/KylinDocs'}
         ]
       }
     ],
     footer: {
       message: 'Casting Character Recognition System Docs',
       copyright: `Copyright © ${new Date().getFullYear()} present Canfeng`
-      // 自动更新时间
-      //copyright: `Copyright © 2019-${new Date().getFullYear()} present Evan You`,
     },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/xin1201946/CRS' }
