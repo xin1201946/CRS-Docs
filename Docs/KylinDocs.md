@@ -373,6 +373,28 @@ yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-co
    > - --cpus 指定cpu核心数
    > - nginx 指定Docker将Nginx作为母容器制作nginx-01 容器
 
+# 编译Python3.6
+
+```shell
+cd /usr/src
+wget https://www.python.org/ftp/python/3.6.15/Python-3.6.15.tgz
+tar xzf Python-3.6.15.tgz
+cd Python-3.6.15
+./configure --enable-shared --enable-optimizations
+make altinstall
+find /usr -name "libpython3.6m.so.1.0"
+echo 'export LD_LIBRARY_PATH=/usr/src/Python-3.6.15:$LD_LIBRARY_PATH' | sudo tee -a /etc/profile
+echo 'LD_LIBRARY_PATH="/usr/src/Python-3.6.15:$LD_LIBRARY_PATH"' | sudo tee -a /etc/environment
+source /etc/environment
+source /etc/profile
+which python3.6
+sudo ln -sf /usr/local/bin/python3.6 /usr/bin/python36
+python36 -m pip install --updgrade pip
+python36 -m pip install  psutil
+reboot
+
+```
+
 
 
 # 安装源配置
