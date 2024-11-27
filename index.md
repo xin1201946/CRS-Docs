@@ -6,7 +6,7 @@ layout: home
 hero:
   name: "Canfeng Docs"
   text: "残风的文档库"
-  tagline: 
+  tagline: "~~~"
 
   image:
     src: /pwa/Frame-512.png
@@ -17,8 +17,8 @@ hero:
       text: CCRS使用文档
       link: /Docs/help-docs
     - theme: alt
-      text: CCRS API 文档
-      link: /Docs/api-docs
+      text: Kylin 笔记
+      link: /Docs/KylinDocs
 
 #features:
 #  - title: 可定制化
