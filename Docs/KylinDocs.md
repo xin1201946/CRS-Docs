@@ -177,7 +177,7 @@ PASS_WARN_AGE 3
    gpgcheck=0
    ```
 
-   AND
+   OR
 
    ```ini
    #APT 追加以下命令
@@ -191,7 +191,7 @@ PASS_WARN_AGE 3
    yum clean all && yum makecache && yum -y update
    ```
 
-   AND
+   OR
 
    ```shell
    #APT
@@ -375,7 +375,7 @@ yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-co
 
 # 编译Python3.6 && 3.7
 
-> 因为 openGauss 官方建议麒麟用户使用自行编译的Python，所以才有了这篇小脚本~
+> 因为 openGauss【 < = V3.0】 官方建议麒麟用户使用自行编译的Python，所以才有了这篇小脚本~
 >
 > 需要配合稍后更新的《OpenGauss数据库》 那里一起使用
 
@@ -427,7 +427,7 @@ for VERSION in "${PYTHON_VERSIONS[@]}"; do
     # 安装 pip 和 psutil
     /usr/bin/python$VERSION -m ensurepip --upgrade
     /usr/bin/python$VERSION -m pip install --upgrade pip
-    /usr/bin/python$VERSION -m pip install psutil
+    /usr/bin/python3.6.15 -m pip install psutil
 done
 
 # 输出安装信息
@@ -468,7 +468,7 @@ fi
 >
 > root@server 是服务器PC
 
-### 安装Ansible
+### 安装Ansible **待更新~**
 
 ```bash
 root@canfengPC# yum install epel-release -y
@@ -481,7 +481,7 @@ root@canfengPC# yum install ansible –y
 root@canfengPC# grep -v '^#' /etc/ansible/ansible.cfg |sed '/^$/d'
 ```
 
-随后修改/etc/ansible/ansible.cfg,并按照一下样本添加缺失条目
+随后修改/etc/ansible/ansible.cfg,并按照以下样本添加缺失条目
 
 ```ini
 [defaults]
@@ -658,7 +658,7 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
 
 > [!Warning]
 >
-> 在 `替换python3版本` 这里注意服务器系统要编译安装Python后安装库psutil，欧拉系统使用3.7，其他系统使用3.6即可
+> 在 `替换python3版本` 这里注意服务器系统要编译安装Python后安装库psutil,请参照官网使用对应Python版本
 >
 > 你可以在服务器系统使用 [这个脚本安装](#编译Python3.6 && 3.7) Python环境
 >
@@ -807,6 +807,28 @@ omm@server:~$ gsql -d postgres -p26000
 > [!Note]
 >
 > 至此，整个自动化部署openGauss完毕，如果有多台机器需要部署，添加主机相关信息到/etc/ansible/hosts，再执行ansible-playbook即可。😎👍
+
+## 排错
+
+> 上面确实是正确的安装做法，但是在实际安装中，仍然会遇到很多错误。
+
+### 缺少库
+
+解决办法就是：系统中其实存在对应库，但是要求的版本过低，不受支持，你需要前往/usr/lib64 OR /usr/lib/ 查找和名字名字一样但是版本不一样的so库，创建一个链接，名字改成程序要求的版本即可.
+
+### 架构一致，不知道为什么报错
+
+> 这个体现在麒麟系统居多
+
+解决办法就是修改 `/opt/software/opengauss/script/gspylib/common/CheckPythonVersion.py` 文件的 `check_os_and_package_arch()`函数。把在68行附近的IF语句，注释掉
+
+### 预安装命令执行时卡住，没有输出内容
+
+添加 `--unused-third-party` 可选项
+
+### 报错[GAUSS-50201] : 找不到.bz2文件
+
+回到服务器的OpenGauss目录把压缩包修改成他想要的格式就行。
 
 # 安装源配置
 
