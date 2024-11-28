@@ -3,7 +3,7 @@ lang: zh-CN
 outline: [1,2,3]
 ---
 
-> > 该内容所记录的操作均在 已配置镜像源的情况下 进行测试。
+> 该内容所记录的操作均在 已配置镜像源的情况下 进行测试。
 
 # 安全加固
 
@@ -373,29 +373,440 @@ yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-co
    > - --cpus 指定cpu核心数
    > - nginx 指定Docker将Nginx作为母容器制作nginx-01 容器
 
-# 编译Python3.6
+# 编译Python3.6 && 3.7
 
-```shell
-cd /usr/src
-wget https://www.python.org/ftp/python/3.6.15/Python-3.6.15.tgz
-tar xzf Python-3.6.15.tgz
-cd Python-3.6.15
-./configure --enable-shared --enable-optimizations
-make altinstall
-find /usr -name "libpython3.6m.so.1.0"
-echo 'export LD_LIBRARY_PATH=/usr/src/Python-3.6.15:$LD_LIBRARY_PATH' | sudo tee -a /etc/profile
-echo 'LD_LIBRARY_PATH="/usr/src/Python-3.6.15:$LD_LIBRARY_PATH"' | sudo tee -a /etc/environment
-source /etc/environment
-source /etc/profile
-which python3.6
-sudo ln -sf /usr/local/bin/python3.6 /usr/bin/python36
-python36 -m pip install --updgrade pip
-python36 -m pip install  psutil
-reboot
+> 因为 openGauss 官方建议麒麟用户使用自行编译的Python，所以才有了这篇小脚本~
+>
+> 需要配合稍后更新的《OpenGauss数据库》 那里一起使用
+
+> [!Note]
+>
+> 即将安装的Python版本分别是
+>
+> - Python 3.6.15
+> - Python 3.7.17
+>
+> 使用命令 Python36 来使用 Python 3.6 或使用 /usr/bin/python37 来使用 Python 3.7
+
+> [!caution]
+>
+> 这里的Python编译安装后不会替换自带的Python2，请不要再安装后直接安装OpenGauss数据库！
+>
+> 自行替换存在风险，请注意备份Python的软连接，稍有不慎就会导致yum，dnf无法使用！
+
+```bash
+#!/bin/bash
+
+# 定义 Python 版本
+PYTHON_VERSIONS=("3.6.15" "3.7.17")
+
+# 安装 Python 3.6 和 3.7 到指定目录
+for VERSION in "${PYTHON_VERSIONS[@]}"; do
+    # 下载 Python 源码
+    cd /usr/src
+    wget https://www.python.org/ftp/python/$VERSION/Python-$VERSION.tgz
+    tar xzf Python-$VERSION.tgz
+    cd Python-$VERSION
+
+    # 配置并安装 Python
+    INSTALL_DIR="/opt/python/$VERSION"
+    sudo ./configure --enable-shared --enable-optimizations --prefix=$INSTALL_DIR
+    sudo make -j 4
+    sudo make altinstall
+
+    # 配置环境变量（全局生效）
+    echo "export PATH=$INSTALL_DIR/bin:\$PATH" | sudo tee -a /etc/profile
+    echo "export LD_LIBRARY_PATH=$INSTALL_DIR/lib:\$LD_LIBRARY_PATH" | sudo tee -a /etc/profile
+    echo "export PYTHONPATH=$INSTALL_DIR/lib/python$VERSION/site-packages:\$PYTHONPATH" | sudo tee -a /etc/profile
+    sudo ln -sf $INSTALL_DIR/bin/python$VERSION /usr/bin/python$VERSION
+    sudo ln -sf $INSTALL_DIR/bin/pip$VERSION /usr/bin/pip$VERSION
+
+    # 使配置生效
+    source /etc/profile
+
+    # 安装 pip 和 psutil
+    /usr/bin/python$VERSION -m ensurepip --upgrade
+    /usr/bin/python$VERSION -m pip install --upgrade pip
+    /usr/bin/python$VERSION -m pip install psutil
+done
+
+# 输出安装信息
+echo "安装成功！"
+for VERSION in "${PYTHON_VERSIONS[@]}"; do
+    echo "Python $VERSION 路径：/opt/python/$VERSION/bin/python$VERSION"
+done
+
+echo "--------------------------------------"
+echo "使用命令 python3.6 来使用Python3.6。"
+echo "使用 python3 或者python3.7 使用Python3.7.17"
+echo "--------------------------------------"
+echo "| 提示: 需要重新启动系统才能生效 |"
+echo "--------------------------------------"
+
+# 确认是否重启系统
+read -p "是否重新启动系统以使更改生效？ (y/n): " choice
+if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+    echo "正在重启系统..."
+    reboot
+else
+    echo "系统未重启，请手动重启以使更改生效。"
+fi
 
 ```
 
+> [!Note]
+>
+> 运行后你可以休息一下，泡杯咖啡~~ 
 
+# OpenGauss数据库
+
+## 使用Ansible自动化安装数据库
+
+> [!warning]
+>
+> root@canfengPC 是客户端PC
+>
+> root@server 是服务器PC
+
+### 安装Ansible
+
+```bash
+root@canfengPC# yum install epel-release -y
+root@canfengPC# yum install ansible –y
+```
+
+### 配置/etc/ansible/ansible.cfg
+
+```bash
+root@canfengPC# grep -v '^#' /etc/ansible/ansible.cfg |sed '/^$/d'
+```
+
+随后修改/etc/ansible/ansible.cfg,并按照一下样本添加缺失条目
+
+```ini
+[defaults]
+host_key_checking = False
+callback_whitelist = timer,profile_roles,log_plays
+log_path = /var/log/ansible.log
+strategy = free
+bin_ansible_callbacks = True
+[inventory]
+[privilege_escalation]
+[paramiko_connection]
+[ssh_connection]
+[persistent_connection]
+[accelerate]
+[selinux]
+[colors]
+[diff]
+[callback_log_plays]
+log_folder=/tmp/ansible/hosts/
+```
+
+### 修改/etc/ansible/hosts添加主机列表
+
+```shell
+root@canfengPC# cat /etc/ansible/hosts
+```
+
+并对新文件添加内容
+
+{Your_Server_IP} 是你的服务器IP
+
+ansible_ssh_user 是计划让Ansible使用那个账户安装软件（不是管理员会导致后续失败！）
+
+ansible_ssh_pass 是你的指定的账户的密码
+
+```ini
+[openGaussdb]
+{Your_Server_IP} ansible_ssh_user=root ansible_ssh_pass={Your_Server_PC_Root_Password}
+```
+
+### 测试连通性
+
+```shell
+root@canfengPC# ansible -i /etc/ansible/hosts openGaussdb -m ping
+```
+
+该命令会在测试成功后输出以下相似内容
+
+```
+Thursday 28 November 2024  09:26:29 +0800 (0:00:00.089)       0:00:00.089 ***** 
+[WARNING]: Platform linux on host 192.168.128.128 is using the discovered Python interpreter at /usr/bin/python, but future installation of another Python interpreter could change this.
+See https://docs.ansible.com/ansible/2.9/reference_appendices/interpreter_discovery.html for more information.
+192.168.128.128 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong" # 出现这个表示成功
+}
+Thursday 28 November 2024  09:26:30 +0800 (0:00:00.900)       0:00:00.989 ***** 
+=============================================================================== 
+ping -------------------------------------------------------------------- 0.90s
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+total ------------------------------------------------------------------- 0.90s
+Playbook run took 0 days, 0 hours, 0 minutes, 0 seconds
+```
+
+### 创建相关目录
+
+> [!warning]
+>
+> 这里注意看路径变化！
+
+```shell
+root@canfengPC ~# cd /etc/ansible/roles/ # 没有自行新建
+root@canfengPC:/etc/ansible/roles# mkdir -p openGauss_Install/{files,vars,tasks,templates}
+root@canfengPC:/etc/ansible/roles# tree openGauss_Install/  # 存在几率失败，目录存在就行
+openGauss_Install/
+├── files
+├── tasks
+├── templates
+└── vars
+
+4 directories, 0 files
+```
+
+> [!Note]
+>
+> 上述目录主要作用如下：
+> files：存放需要同步到异地服务器的安装文件或者配置文件；
+> tasks：openGauss安装过程需要进行的执行的任务；
+> templates：用于执行openGauss安装的模板文件，一般为脚本；
+> vars：安装openGauss定义的变量；
+
+### 下载openGauss软件包到files目录
+
+```shell
+root@canfengPC:/etc/ansible/roles# cd openGauss_Install/files/
+root@canfengPC:/etc/ansible/roles/openGauss_Install/files#  wget https://opengauss.obs.cn-south-1.myhuaweicloud.com/3.1.0/x86/openGauss-3.1.0-CentOS-64bit-all.tar.gz
+root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/vars/main.yml #这里不调目录直接修改
+```
+
+在打开的文件中写入下面内容
+
+```ini
+#安装包名称，一定和下载的文件名一致
+openGauss_software: openGauss-3.1.0-CentOS-64bit-all.tar.gz
+#解压目录
+install_dir: /opt/software/openGauss
+#omm用户密码，可自己修改
+omm_password: openGauss@123 
+#数据库密码，可自己修改
+db_password: openGauss@123
+```
+
+### 创建安装时需要的xml模板
+
+```shell
+root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/templates/cluster_config.j2
+```
+
+填入一下内容,其中将 {{inventory_hostname}} 修改为服务器IP
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+    <!-- openGauss整体信息 -->
+    <CLUSTER>
+        <!-- 数据库名称 -->
+        <PARAM name="clusterName" value="dbCluster" />
+        <!-- 数据库节点名称(hostname) -->
+        <PARAM name="nodeNames" value="{{ ansible_hostname }}" />
+        <!-- 数据库安装目录-->
+        <PARAM name="gaussdbAppPath" value="/opt/huawei/install/app" />
+        <!-- 日志目录-->
+        <PARAM name="gaussdbLogPath" value="/var/log/omm" />
+        <!-- 临时文件目录-->
+        <PARAM name="tmpMppdbPath" value="/opt/huawei/tmp" />
+        <!-- 数据库工具目录-->
+        <PARAM name="gaussdbToolPath" value="/opt/huawei/install/om" />
+        <!-- 数据库core文件目录-->
+        <PARAM name="corePath" value="/opt/huawei/corefile" />
+        <!-- 节点IP，与数据库节点名称列表一一对应 -->
+        <PARAM name="backIp1s" value="{{ inventory_hostname }}"/>
+    </CLUSTER>
+    <!-- 每台服务器上的节点部署信息 -->
+    <DEVICELIST>
+        <!-- 节点1上的部署信息 -->
+        <DEVICE sn="1000001">
+            <!-- 节点1的主机名称 -->
+            <PARAM name="name" value="{{ ansible_hostname }}"/>
+            <!-- 节点1所在的AZ及AZ优先级 -->
+            <PARAM name="azName" value="AZ1"/>
+            <PARAM name="azPriority" value="1"/>
+            <!-- 节点1的IP，如果服务器只有一个网卡可用，将backIP1和sshIP1配置成同一个IP -->
+            <PARAM name="backIp1" value="{{ inventory_hostname }}"/>
+            <PARAM name="sshIp1" value="{{ inventory_hostname }}"/>
+            <!--dbnode-->
+            <PARAM name="dataNum" value="1"/>
+            <PARAM name="dataPortBase" value="26000"/>
+            <PARAM name="dataNode1" value="/opt/huawei/install/data/dn01"/>
+            <PARAM name="dataNode1_syncNum" value="0"/>
+        </DEVICE>
+    </DEVICELIST>
+</ROOT>
+```
+
+### 创建任务文件
+
+```shell
+root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks/main.yml
+```
+
+新建文件后写入下面内容
+
+> [!Warning]
+>
+> 在 `替换python3版本` 这里注意服务器系统要编译安装Python后安装库psutil，欧拉系统使用3.7，其他系统使用3.6即可
+>
+> 你可以在服务器系统使用 [这个脚本安装](#编译Python3.6 && 3.7) Python环境
+>
+> 否则要么报错缺少库，要么卡住不动！
+
+```yml
+- name: 关闭防火墙
+  shell: systemctl disable firewalld.service && systemctl stop firewalld.service
+  ignore_errors: true
+  tags: 01_os_syscfg
+- name: 关闭selinux
+  shell: sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+  ignore_errors: true
+  tags: 01_os_syscfg
+- name: 设置时区
+  shell: timedatectl set-timezone Asia/Shanghai
+  tags: 01_os_syscfg
+- name: 关闭RemoveIPC
+  lineinfile:
+    path:  /etc/systemd/logind.conf
+    state: present
+    line: "RemoveIPC=no"
+  tags: 01_os_syscfg
+- name: 重启systemd-logind服务
+  shell: systemctl daemon-reload && systemctl restart systemd-logind
+  tags: 01_os_syscfg
+- name: 创建组
+  group: name=dbgrp gid=2000
+  tags: 02_user_add
+- name: 创建用户
+  user:
+    name=omm  uid=2000 group=dbgrp
+  tags: 02_user_add
+- name: 修改密码
+  shell: echo "{{omm_password}}" | passwd --stdin omm
+  tags: 02_user_add
+- name: 新建目录
+  file: path="{{item}}"  state=directory mode=0755 owner=omm group=dbgrp
+  with_items:
+      - /opt/software/
+      - /opt/software/openGauss
+  tags: 03_unzip_db
+- name: 上传安装包
+  copy: src={{openGauss_software}} dest={{install_dir}}  owner=omm group=dbgrp mode=0644
+  tags: install
+  tags: 03_unzip_db
+- name: "解压软件包"
+  shell: cd {{install_dir}} && tar -zxvf *all.tar.gz && tar -zxvf *om.tar.gz
+  become: yes
+  become_user: omm
+  tags: 03_unzip_db
+- name: "安装依赖包"
+  command: yum install -y libaio-devel flex bison ncurses-devel glibc-devel patch bzip2 readline-devel net-tools tar gcc gcc-c++
+  tags: 04_os_yum
+- name: 检查 python2_bak 是否存在
+  stat:
+    path: /usr/bin/python2_bak
+  register: python2_bak_stat
+  tags: 05_replace_ok
+
+- name: 替换 python3 版本
+  shell: |
+    {% if python2_bak_stat.stat.exists == false %}
+      mv /usr/bin/python /usr/bin/python2_bak
+    {% endif %}
+    ln -s /usr/bin/python3 /usr/bin/python && python -V
+  tags: 05_replace_py
+
+- name: 配置xml文件
+  template: src=cluster_config.j2 dest={{install_dir}}/clusterconfig.xml
+  tags: 06_config_xml
+- name: 执行预安装脚本
+  shell: '{{install_dir}}/script/gs_preinstall -U omm -G dbgrp -X {{install_dir}}/clusterconfig.xml --non-interactive'
+  register: preinstall
+  tags: 07_pre_install
+- debug: var=preinstall.stdout_lines
+  ignore_errors: true
+  tags: 07_pre_install
+- name: 检查预安装环境
+  shell: '{{install_dir}}/script/gs_checkos -i A -h {{ ansible_hostname }} --detail'
+  register: checkos
+  tags: 08_check_os
+- debug: var=checkos.stdout_lines
+  ignore_errors: true
+  tags: 08_check_os
+- name: 更改权限
+  shell: chmod -R 755 {{install_dir}}
+  tags: 09_gs_install
+- name: 执行gs_install
+  shell: su - omm -c '{{install_dir}}/script/gs_install -X {{install_dir}}/clusterconfig.xml --gsinit-parameter="--pwpasswd={{db_password}}"''
+  register: gsinstall
+  tags: 09_gs_install
+- debug: var=gsinstall.stdout_lines
+  ignore_errors: true
+  tags: 09_gs_install
+- name: 启动数据库
+  shell: ss -anpt|grep 26000 && su - omm -c "gs_ctl restart " || su - omm -c "gs_om -t start "
+  tags: 10_db_start
+- name: "登录数据库"
+  shell: ss -anpt|grep 26000 && su - omm -c "gsql -d postgres -p26000 -r -l"
+  tags: 10_db_start
+```
+
+### 创建剧本调用文件
+
+```shell
+root@canfengPC:/etc/ansible/roles# vi /etc/ansible/playbook/InstallopenGauss.yml 
+```
+
+写入以下文本
+
+```yml
+- name: Install openGauss
+  hosts: openGaussdb
+  remote_user: root
+  roles:
+  - openGauss_Install
+```
+
+### 校验语法（测试安装过程）
+
+```shell
+root@canfengPC:~# ansible-playbook -C /etc/ansible/playbook/InstallopenGauss.yml
+```
+
+如果成功，你会看到 最底下 failed的值为0
+
+### 开始正式安装
+
+```shell
+root@canfengPC:~# ansible-playbook /etc/ansible/playbook/InstallopenGauss.yml
+```
+
+安装时间很长，需要等待ing...
+
+### 安装完成后验证
+
+> [!Note]
+>
+> 你终于用到你的服务器啦，登录你的omm账户
+
+```shell
+omm@server:~$ gsql -d postgres -p26000
+```
+
+> [!Note]
+>
+> 至此，整个自动化部署openGauss完毕，如果有多台机器需要部署，添加主机相关信息到/etc/ansible/hosts，再执行ansible-playbook即可。😎👍
 
 # 安装源配置
 
