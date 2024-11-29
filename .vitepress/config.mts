@@ -2,8 +2,28 @@
 
 import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
+export interface LastUpdatedOptions {
+  /**
+   * @default 'Last updated'
+   */
+  text?: string
+
+  /**
+   * @default
+   * { dateStyle: 'short',  timeStyle: 'short' }
+   */
+  formatOptions?: Intl.DateTimeFormatOptions & { forceLocale?: boolean }
+}
 export default defineConfig({
   lang: 'zh-CN', //语言，可选 en-US
+  lastUpdated: {
+    text: '最后更新于：',
+    formatOptions: {
+      dateStyle: 'full',
+      timeStyle: 'medium',
+    },
+  },
+
   title: "Canfeng Docs",
   description: "",
   cleanUrls:true,
@@ -158,7 +178,11 @@ export default defineConfig({
       copyright: `Copyright © ${new Date().getFullYear()} present Canfeng`
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/xin1201946/CRS' }
+      { icon: 'github', link: 'https://github.com/xin1201946/CRS-Docs' },
+      {
+        icon:{svg:'<img style="border-radius:20px;width:70%" src="https://avatars.githubusercontent.com/u/70047091?v=4" alt="">'},
+        link:'https://github.com/xin1201946'
+      }
     ]
   }
 })

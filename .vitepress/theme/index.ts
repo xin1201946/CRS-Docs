@@ -11,7 +11,6 @@ import MyLayout from './components/MyLayout.vue'
 
 export default {
   extends: DefaultTheme,
-
   setup() {
     const route = useRoute()
     const { frontmatter } = useData();

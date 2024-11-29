@@ -1,21 +1,23 @@
 ---
 lang: zh-CN
 outline: [1,2,3]
+title: Kylin 笔记
 ---
+# **{{ $frontmatter.title }}**
 
 > 该内容所记录的操作均在 已配置镜像源的情况下 进行测试。
 
-# 安全加固
+## 安全加固
 
-## 账户口令复杂度配置
+### 账户口令复杂度配置
 
-### 过程
+#### 过程
 
 通过编辑 `/etc/security/pwquality.conf` 文件的以下参数进行配置
 
 >  [!Warning]   
 >
-> 当字段包含` (负数)` 注释时，代表需要将值设置为负值才会生效。
+> 当字段包含` (负数)`注释时，代表需要将值设置为负值才会生效。
 
 - difok 不得与上册密码相同的字符个数
 - minlen 密码最小长度
@@ -26,7 +28,7 @@ outline: [1,2,3]
 - maxrepeat 相同字符最大出现次数
 - usercheck 检查密码是否与用户名相同
 
-### 实例
+#### 实例
 
 当设置控制用户的密码至少包含2个数字，2个大写字母，无需小写字母，至少4个特殊字符，密码包含1种字符类型时，代码如下：
 
@@ -45,15 +47,15 @@ ocredit = -4
 minclass = 5
 ```
 
-## 密码生存周期
+### 密码生存周期
 
 >  [!Note]
 >
 > 以下命令`change`测试无效
 
-### 过程
+#### 过程
 
-#### 使用Change命令
+##### 使用Change命令
 
 你可以使用`change`命令对**<u>指定用户</u>**的密码周期进行修改
 
@@ -81,7 +83,7 @@ change -m 1 canfengs
 change -W 3 canfegs
 ```
 
-#### 修改配置文件修改全局设置
+##### 修改配置文件修改全局设置
 
 > [!Note]
 >
@@ -101,13 +103,13 @@ PASS_MIN_DAYS 1
 PASS_WARN_AGE 3
 ```
 
-# FTP
+### FTP
 
 > [!Note]
 >
 > 以下命令默认已安装镜像源，故并无需插入光盘并手动配置安装源，如果想了解相关过程，可参考 [安装源配置](#安装源配置)
 
-### 安装FTP
+#### 安装FTP
 
 1. 安装FTP服务
 
@@ -145,7 +147,7 @@ PASS_WARN_AGE 3
    systemctl stop firewalld
    ```
 
-###  客户机使用FTP服务
+####  客户机使用FTP服务
 
    > [!warning]
    >
@@ -206,9 +208,9 @@ PASS_WARN_AGE 3
    apt install mariadb-server mariadb
    ```
 
-# NFS 服务
+## NFS 服务
 
-## 安装NFS
+### 安装NFS
 
 > [!Note]
 >
@@ -223,9 +225,9 @@ systemctl enable nfs
 systemctl status nfs
 ```
 
-## 服务端共享目录
+### 服务端共享目录
 
-### server节点
+#### server节点
 
 > 必须全程关闭 Selinux和防火墙
 
@@ -274,7 +276,7 @@ chmod 777 /opt/test/
 showmount -e [Server-IP]
 ```
 
-### 客户端节点
+#### 客户端节点
 
 关闭防火墙和Selinux
 
@@ -299,13 +301,13 @@ df -h
 
 
 
-# Docker
+## Docker
 
 > 这里的步骤不要省略！尤其是添加秘钥！
 >
 > Docker 的官方 并没将Docker添加到各大Linux安装源中，故Linux直接安装Docker可能会出现不信任软件库的情况，需要添加秘钥
 
-## 安装
+### 安装
 
 > [!Note]
 >
@@ -373,7 +375,7 @@ yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-co
    > - --cpus 指定cpu核心数
    > - nginx 指定Docker将Nginx作为母容器制作nginx-01 容器
 
-# 编译Python3.6 && 3.7
+## 编译Python3.6 && 3.7
 
 > 因为 openGauss【 < = V3.0】 官方建议麒麟用户使用自行编译的Python，所以才有了这篇小脚本~
 >
@@ -458,9 +460,9 @@ fi
 >
 > 运行后你可以休息一下，泡杯咖啡~~ 
 
-# OpenGauss数据库
+## OpenGauss数据库  <Badge type="tip" text="待更新" />
 
-## 使用Ansible自动化安装数据库
+### 使用Ansible自动化安装数据库
 
 > [!warning]
 >
@@ -468,14 +470,14 @@ fi
 >
 > root@server 是服务器PC
 
-### 安装Ansible **待更新~**
+#### 安装Ansible 
 
 ```bash
 root@canfengPC# yum install epel-release -y
 root@canfengPC# yum install ansible –y
 ```
 
-### 配置/etc/ansible/ansible.cfg
+#### 配置/etc/ansible/ansible.cfg
 
 ```bash
 root@canfengPC# grep -v '^#' /etc/ansible/ansible.cfg |sed '/^$/d'
@@ -503,7 +505,7 @@ bin_ansible_callbacks = True
 log_folder=/tmp/ansible/hosts/
 ```
 
-### 修改/etc/ansible/hosts添加主机列表
+#### 修改/etc/ansible/hosts添加主机列表
 
 ```shell
 root@canfengPC# cat /etc/ansible/hosts
@@ -522,7 +524,7 @@ ansible_ssh_pass 是你的指定的账户的密码
 {Your_Server_IP} ansible_ssh_user=root ansible_ssh_pass={Your_Server_PC_Root_Password}
 ```
 
-### 测试连通性
+#### 测试连通性
 
 ```shell
 root@canfengPC# ansible -i /etc/ansible/hosts openGaussdb -m ping
@@ -549,7 +551,7 @@ total ------------------------------------------------------------------- 0.90s
 Playbook run took 0 days, 0 hours, 0 minutes, 0 seconds
 ```
 
-### 创建相关目录
+#### 创建相关目录
 
 > [!warning]
 >
@@ -576,7 +578,11 @@ openGauss_Install/
 > templates：用于执行openGauss安装的模板文件，一般为脚本；
 > vars：安装openGauss定义的变量；
 
-### 下载openGauss软件包到files目录
+#### 下载openGauss软件包到files目录
+
+> [!Warning]
+>
+> 麒麟系统请下载欧拉版本OpenGauss
 
 ```shell
 root@canfengPC:/etc/ansible/roles# cd openGauss_Install/files/
@@ -597,7 +603,7 @@ omm_password: openGauss@123
 db_password: openGauss@123
 ```
 
-### 创建安装时需要的xml模板
+创建安装时需要的xml模板
 
 ```shell
 root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/templates/cluster_config.j2
@@ -648,7 +654,7 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/templ
 </ROOT>
 ```
 
-### 创建任务文件
+#### 创建任务文件
 
 ```shell
 root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks/main.yml
@@ -762,7 +768,7 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
   tags: 10_db_start
 ```
 
-### 创建剧本调用文件
+#### 创建剧本调用文件
 
 ```shell
 root@canfengPC:/etc/ansible/roles# vi /etc/ansible/playbook/InstallopenGauss.yml 
@@ -778,7 +784,7 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/playbook/InstallopenGauss.yml
   - openGauss_Install
 ```
 
-### 校验语法（测试安装过程）
+#### 校验语法（测试安装过程）
 
 ```shell
 root@canfengPC:~# ansible-playbook -C /etc/ansible/playbook/InstallopenGauss.yml
@@ -786,7 +792,7 @@ root@canfengPC:~# ansible-playbook -C /etc/ansible/playbook/InstallopenGauss.yml
 
 如果成功，你会看到 最底下 failed的值为0
 
-### 开始正式安装
+#### 开始正式安装
 
 ```shell
 root@canfengPC:~# ansible-playbook /etc/ansible/playbook/InstallopenGauss.yml
@@ -794,9 +800,9 @@ root@canfengPC:~# ansible-playbook /etc/ansible/playbook/InstallopenGauss.yml
 
 安装时间很长，需要等待ing...
 
-### 安装完成后验证
+#### 安装完成后验证
 
-> [!Note]
+> [!Note] 完成！
 >
 > 你终于用到你的服务器啦，登录你的omm账户
 
@@ -804,29 +810,29 @@ root@canfengPC:~# ansible-playbook /etc/ansible/playbook/InstallopenGauss.yml
 omm@server:~$ gsql -d postgres -p26000
 ```
 
-> [!Note]
+> [!Note] ✨完结撒花🎉
 >
 > 至此，整个自动化部署openGauss完毕，如果有多台机器需要部署，添加主机相关信息到/etc/ansible/hosts，再执行ansible-playbook即可。😎👍
 
-## 排错
+### 排错
 
 > 上面确实是正确的安装做法，但是在实际安装中，仍然会遇到很多错误。
 
-### 缺少库
+#### 缺少库
 
 解决办法就是：系统中其实存在对应库，但是要求的版本过低，不受支持，你需要前往/usr/lib64 OR /usr/lib/ 查找和名字名字一样但是版本不一样的so库，创建一个链接，名字改成程序要求的版本即可.
 
-### 架构一致，不知道为什么报错
+#### 架构一致，不知道为什么报错
 
 > 这个体现在麒麟系统居多
 
 解决办法就是修改 `/opt/software/opengauss/script/gspylib/common/CheckPythonVersion.py` 文件的 `check_os_and_package_arch()`函数。把在68行附近的IF语句，注释掉
 
-### 预安装命令执行时卡住，没有输出内容
+#### 预安装命令执行时卡住，没有输出内容
 
 添加 `--unused-third-party` 可选项
 
-### 报错[GAUSS-50201] : 找不到.bz2文件
+#### 报错[GAUSS-50201] : 找不到.bz2文件
 
 回到服务器的OpenGauss目录把压缩包修改成他想要的格式就行。
 
