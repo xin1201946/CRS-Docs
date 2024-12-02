@@ -55,16 +55,16 @@ minclass = 5
 
 #### 过程
 
-##### 使用Change命令
+##### 使用Chage命令
 
-你可以使用`change`命令对**<u>指定用户</u>**的密码周期进行修改
+你可以使用`chage`命令对**<u>指定用户</u>**的密码周期进行修改
 
 例如：
 
 设置用户密码有效期90天
 
 ```bash
-change -M 90 canfengs
+chage -M 90 canfengs
 ```
 
 
@@ -72,7 +72,7 @@ change -M 90 canfengs
 设置用户最短有效期1天
 
 ```shell
-change -m 1 canfengs
+chage -m 1 canfengs
 ```
 
 
@@ -80,7 +80,7 @@ change -m 1 canfengs
 设置过期前3天提醒用户
 
 ```shell
-change -W 3 canfegs
+chage -W 3 canfegs
 ```
 
 ##### 修改配置文件修改全局设置
@@ -582,11 +582,11 @@ openGauss_Install/
 
 > [!Warning]
 >
-> 麒麟系统请下载欧拉版本OpenGauss
+> 麒麟系统请下载欧拉系统版本OpenGauss
 
 ```shell
 root@canfengPC:/etc/ansible/roles# cd openGauss_Install/files/
-root@canfengPC:/etc/ansible/roles/openGauss_Install/files#  wget https://opengauss.obs.cn-south-1.myhuaweicloud.com/3.1.0/x86/openGauss-3.1.0-CentOS-64bit-all.tar.gz
+root@canfengPC:/etc/ansible/roles/openGauss_Install/files#  https://opengauss.obs.cn-south-1.myhuaweicloud.com/6.0.0/openEuler22.03/x86/openGauss-All-6.0.0-openEuler22.03-x86_64.tar.gz
 root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/vars/main.yml #这里不调目录直接修改
 ```
 
@@ -594,7 +594,7 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/vars/
 
 ```ini
 #安装包名称，一定和下载的文件名一致
-openGauss_software: openGauss-3.1.0-CentOS-64bit-all.tar.gz
+openGauss_software: openGauss-All-6.0.0-openEuler22.03-x86_64.tar.gz
 #解压目录
 install_dir: /opt/software/openGauss
 #omm用户密码，可自己修改
@@ -609,48 +609,35 @@ db_password: openGauss@123
 root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/templates/cluster_config.j2
 ```
 
-填入一下内容,其中将 {{inventory_hostname}} 修改为服务器IP
+填入一下内容,其中将 "192.168.128.128“ 修改为服务器IP,然后将你的主机名更改为你的IP
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
+
 <ROOT>
-    <!-- openGauss整体信息 -->
     <CLUSTER>
-        <!-- 数据库名称 -->
-        <PARAM name="clusterName" value="dbCluster" />
-        <!-- 数据库节点名称(hostname) -->
-        <PARAM name="nodeNames" value="{{ ansible_hostname }}" />
-        <!-- 数据库安装目录-->
-        <PARAM name="gaussdbAppPath" value="/opt/huawei/install/app" />
-        <!-- 日志目录-->
-        <PARAM name="gaussdbLogPath" value="/var/log/omm" />
-        <!-- 临时文件目录-->
-        <PARAM name="tmpMppdbPath" value="/opt/huawei/tmp" />
-        <!-- 数据库工具目录-->
-        <PARAM name="gaussdbToolPath" value="/opt/huawei/install/om" />
-        <!-- 数据库core文件目录-->
-        <PARAM name="corePath" value="/opt/huawei/corefile" />
-        <!-- 节点IP，与数据库节点名称列表一一对应 -->
-        <PARAM name="backIp1s" value="{{ inventory_hostname }}"/>
-    </CLUSTER>
-    <!-- 每台服务器上的节点部署信息 -->
+        <PARAM name="clusterName" value="Cluster_template" />
+        <PARAM name="nodeNames" value="192.168.128.128" />
+        <PARAM name="gaussdbAppPath" value="/opt/openGauss/install/app" />
+        <PARAM name="gaussdbLogPath" value="/opt/openGauss/install/log" />
+        <PARAM name="tmpMppdbPath" value="/opt/openGauss/install/tmp" />
+        <PARAM name="gaussdbToolPath" value="/opt/openGauss/install/tool" />
+        <PARAM name="corePath" value="/opt/openGauss/install/corefile" />
+        <PARAM name="backIp1s" value="192.168.128.128" />
+        </CLUSTER>
+
     <DEVICELIST>
-        <!-- 节点1上的部署信息 -->
-        <DEVICE sn="1000001">
-            <!-- 节点1的主机名称 -->
-            <PARAM name="name" value="{{ ansible_hostname }}"/>
-            <!-- 节点1所在的AZ及AZ优先级 -->
-            <PARAM name="azName" value="AZ1"/>
-            <PARAM name="azPriority" value="1"/>
-            <!-- 节点1的IP，如果服务器只有一个网卡可用，将backIP1和sshIP1配置成同一个IP -->
-            <PARAM name="backIp1" value="{{ inventory_hostname }}"/>
-            <PARAM name="sshIp1" value="{{ inventory_hostname }}"/>
-            <!--dbnode-->
-            <PARAM name="dataNum" value="1"/>
-            <PARAM name="dataPortBase" value="26000"/>
-            <PARAM name="dataNode1" value="/opt/huawei/install/data/dn01"/>
-            <PARAM name="dataNode1_syncNum" value="0"/>
+        <DEVICE sn="node1_hostname">
+            <PARAM name="name" value="192.168.128.128" />
+            <PARAM name="azName" value="AZ1" />
+            <PARAM name="azPriority" value="1" />
+            <PARAM name="backIp1" value="192.168.128.128" />
+            <PARAM name="sshIp1" value="192.168.128.128" />
+            <PARAM name="dataNum" value="1" />
+            <PARAM name="dataPortBase" value="26000" />
+            <PARAM name="dataNode1" value="/opt/openGauss/install/data/dn1" />
+            <PARAM name="dataNode1_syncNum" value="0" />
         </DEVICE>
-    </DEVICELIST>
+
+        </DEVICELIST>
 </ROOT>
 ```
 
@@ -719,18 +706,9 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
 - name: "安装依赖包"
   command: yum install -y libaio-devel flex bison ncurses-devel glibc-devel patch bzip2 readline-devel net-tools tar gcc gcc-c++
   tags: 04_os_yum
-- name: 检查 python2_bak 是否存在
-  stat:
-    path: /usr/bin/python2_bak
-  register: python2_bak_stat
-  tags: 05_replace_ok
-
+  
 - name: 替换 python3 版本
-  shell: |
-    {% if python2_bak_stat.stat.exists == false %}
-      mv /usr/bin/python /usr/bin/python2_bak
-    {% endif %}
-    ln -s /usr/bin/python3 /usr/bin/python && python -V
+  shell: cp /usr/bin/python /usr/bin/python_backup &&  ln -s /usr/bin/python3 /usr/bin/python && python -V
   tags: 05_replace_py
 
 - name: 配置xml文件
@@ -875,9 +853,23 @@ mount Kylin-Server-10-SP2-Release-Build09-20210524-x86_64.iso /opt/kylin
   - 进入source.list 后 添加 
 
     ```ini
-    deb [trusted=yes]  file:///opt/kylin
+    #从光盘根下的dist文件夹后的文件夹开始写 main restricted universe multiverse 
+    deb [trusted=yes]  file:///opt/kylin 
+    # 以麒麟为例，其dist下结构为:
+    #/media/canfeng/Kylin-Desktop-V10-SP1
+    #├── dists
+    #│   ├── TRANS.TBL
+    #│   └── v101
+    #│       ├── main
+    #│       ├── multiverse
+    #│       ├── restricted
+    #│       ├── TRANS.TBL
+    #│       └── universe
+    # 你就需要写上v101，变成
+    deb [trusted=yes]  file:///opt/kylin v101 main restricted universe multiverse 
+    # 因为 main restricted universe multiverse 在dist/v101/下，所以需要将v101包含在内。
     ```
-
+    
     
 
 - Yum源:

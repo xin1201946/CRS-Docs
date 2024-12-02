@@ -169,7 +169,8 @@ export default defineConfig({
       {
         text: 'Kylin文档',
         items: [
-          { text: 'Kylin-笔记', link: '/Docs/KylinDocs'}
+          { text: 'Kylin-笔记', link: '/Docs/KylinDocs'},
+          { text: 'Kylin-总结', link: '/Docs/KylinNote'},
         ]
       }
     ],
