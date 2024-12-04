@@ -1,6 +1,6 @@
 ---
 lang: zh-CN
-outline: [1,2,3]
+outline: [1,2,3,4]
 title: Kylin 笔记
 ---
 # **{{ $frontmatter.title }}**
