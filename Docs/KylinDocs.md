@@ -911,6 +911,44 @@ omm@server:~$ gsql -d postgres -p26000
 </ROOT>
 ```
 
+### 常用命令
+
+使用 `gsql` 命令登录 OpenGauss 数据库：
+
+```
+gsql -d postgres -U gaussdb
+```
+
+查看数据库列表：
+
+```sql
+\l
+```
+
+查看所有的表：
+
+```sql
+\dt
+```
+
+查看所有的视图：
+
+```sql
+\dv
+```
+
+查看所有的索引：
+
+```sql
+\di
+```
+
+**查询表空间**： 查询表空间信息：
+
+```sql
+SELECT * FROM pg_tablespace;
+```
+
 ### 安装命令
 
 #### 预安装
