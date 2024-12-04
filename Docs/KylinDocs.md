@@ -324,7 +324,7 @@ $ sudo yum-config-manager -add-repo https://download.docker.com/linux/centos/doc
 
 2. 安装Docker·CE
 ```shell
-yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+$ yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 3. 启动Docker
@@ -460,7 +460,33 @@ fi
 >
 > 运行后你可以休息一下，泡杯咖啡~~ 
 
-## OpenGauss数据库  <Badge type="tip" text="待更新" />
+## RAID
+
+**查看当前系统中的磁盘：**
+
+- 命令：`lsblk` 这个命令会列出所有可用的磁盘和分区。
+
+**创建 RAID 1 阵列，包含两个磁盘 `/dev/sda` 和 `/dev/sdb`：**
+
+- 命令：`mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sda /dev/sdb` 这里，`/dev/md0` 是 RAID 阵列设备，`--level=1` 表示 RAID 1（镜像），`--raid-devices=2` 表示有两个设备。
+
+**查看 RAID 阵列的状态：**
+
+- 命令：`cat /proc/mdstat` 这个命令会显示当前所有 RAID 阵列的状态，包括阵列是否正常运行。
+
+**指定元数据格式创建 RAID 阵列：**
+
+- 命令：`mdadm --create /dev/md0 --level=1 --raid-devices=2 --metadata=1.2 /dev/sda /dev/sdb` `--metadata=1.2` 用来指定元数据格式，常用的格式有 0.90、1.0、1.2 等。
+
+**为 RAID 阵列创建文件系统（例如 ext4）：**
+
+- 命令：`mkfs.ext4 /dev/md0` 这个命令会在 `/dev/md0` 上创建 ext4 文件系统。
+
+**查看 RAID 阵列的详细信息：**
+
+- 命令：`mdadm --detail /dev/md0` 这个命令会显示有关 RAID 阵列的详细信息，包括阵列状态、成员磁盘等。
+
+## OpenGauss数据库  
 
 ### 使用Ansible自动化安装数据库
 
@@ -666,18 +692,6 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
   shell: sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
   ignore_errors: true
   tags: 01_os_syscfg
-- name: 设置时区
-  shell: timedatectl set-timezone Asia/Shanghai
-  tags: 01_os_syscfg
-- name: 关闭RemoveIPC
-  lineinfile:
-    path:  /etc/systemd/logind.conf
-    state: present
-    line: "RemoveIPC=no"
-  tags: 01_os_syscfg
-- name: 重启systemd-logind服务
-  shell: systemctl daemon-reload && systemctl restart systemd-logind
-  tags: 01_os_syscfg
 - name: 创建组
   group: name=dbgrp gid=2000
   tags: 02_user_add
@@ -706,10 +720,6 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
 - name: "安装依赖包"
   command: yum install -y libaio-devel flex bison ncurses-devel glibc-devel patch bzip2 readline-devel net-tools tar gcc gcc-c++
   tags: 04_os_yum
-  
-- name: 替换 python3 版本
-  shell: cp /usr/bin/python /usr/bin/python_backup &&  ln -s /usr/bin/python3 /usr/bin/python && python -V
-  tags: 05_replace_py
 
 - name: 配置xml文件
   template: src=cluster_config.j2 dest={{install_dir}}/clusterconfig.xml
@@ -718,16 +728,6 @@ root@canfengPC:/etc/ansible/roles# vi /etc/ansible/roles/openGauss_Install/tasks
   shell: '{{install_dir}}/script/gs_preinstall -U omm -G dbgrp -X {{install_dir}}/clusterconfig.xml --non-interactive'
   register: preinstall
   tags: 07_pre_install
-- debug: var=preinstall.stdout_lines
-  ignore_errors: true
-  tags: 07_pre_install
-- name: 检查预安装环境
-  shell: '{{install_dir}}/script/gs_checkos -i A -h {{ ansible_hostname }} --detail'
-  register: checkos
-  tags: 08_check_os
-- debug: var=checkos.stdout_lines
-  ignore_errors: true
-  tags: 08_check_os
 - name: 更改权限
   shell: chmod -R 755 {{install_dir}}
   tags: 09_gs_install
@@ -791,6 +791,60 @@ omm@server:~$ gsql -d postgres -p26000
 > [!Note] ✨完结撒花🎉
 >
 > 至此，整个自动化部署openGauss完毕，如果有多台机器需要部署，添加主机相关信息到/etc/ansible/hosts，再执行ansible-playbook即可。😎👍
+
+### 配置文件参考
+
+```xml
+<ROOT>
+    <CLUSTER>
+        <PARAM name="clusterName" value="Cluster_template" />
+        <PARAM name="nodeNames" value="192.168.128.128" />
+        <PARAM name="gaussdbAppPath" value="/opt/openGauss/install/app" />
+        <PARAM name="gaussdbLogPath" value="/opt/openGauss/install/log" />
+        <PARAM name="tmpMppdbPath" value="/opt/openGauss/install/tmp" />
+        <PARAM name="gaussdbToolPath" value="/opt/openGauss/install/tool" />
+        <PARAM name="corePath" value="/opt/openGauss/install/corefile" />
+        <PARAM name="backIp1s" value="192.168.128.128" />
+        </CLUSTER>
+
+    <DEVICELIST>
+        <DEVICE sn="node1_hostname">
+            <PARAM name="name" value="192.168.128.128" />
+            <PARAM name="azName" value="AZ1" />
+            <PARAM name="azPriority" value="1" />
+            <PARAM name="backIp1" value="192.168.128.128" />
+            <PARAM name="sshIp1" value="192.168.128.128" />
+            <PARAM name="dataNum" value="1" />
+            <PARAM name="dataPortBase" value="26000" />
+            <PARAM name="dataNode1" value="/opt/openGauss/install/data/dn1" />
+            <PARAM name="dataNode1_syncNum" value="0" />
+        </DEVICE>
+
+        </DEVICELIST>
+</ROOT>
+```
+
+### 安装命令
+
+#### 预安装
+
+```shell
+gs_preinstall -U omm -G dbgrp --one-stop-install
+OR
+gs_preinstall -U omm -G dbgrp -X {{install_dir}}/clusterconfig.xml
+```
+
+#### 安装
+
+```shell
+su omm && gs_install -X {{install_dir}}/clusterconfig.xml
+```
+
+#### 登录
+
+```shell
+su omm && gsql -d postgres -p26000
+```
 
 ### 排错
 
