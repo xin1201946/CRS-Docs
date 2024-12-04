@@ -208,6 +208,93 @@ PASS_WARN_AGE 3
    apt install mariadb-server mariadb
    ```
 
+##  iSCSI 协议创建文件存储
+
+### 服务器
+
+#### 1. **创建 2GB 文件存储**
+
+使用 `dd` 命令创建一个 2GB 的虚拟磁盘文件（存储文件）。
+
+```
+dd if=/dev/zero of=/root/kylin-iscsi-file bs=1M count=2048
+```
+
+#### 2. **创建 iSCSI 共享配置**
+
+**使用 `targetcli` 创建 iSCSI 存储共享：**
+
+```
+targetcli
+/backstores/fileio create kylin-iscsi-file /root/kylin-iscsi-file 2G
+/iscsi create iqn.2024-04.com.kylin:file
+/iscsi/iqn.2024-04.com.kylin:file/tpg1/luns create /backstores/fileio/kylin-iscsi-file
+/iscsi/iqn.2024-04.com.kylin:file/tpg1/acls create iqn.2024-04.com.kylin:storage
+```
+
+解释：
+
+- `/backstores/fileio`：指定文件存储。
+- `create kylin-iscsi-file /root/kylin-iscsi-file 2G`：指定文件存储的路径和大小。
+- `/iscsi create iqn.2024-04.com.kylin:file`：创建一个 iSCSI 目标（即共享）。
+- `/iscsi/iqn.2024-04.com.kylin:file/tpg1/luns create`：为该目标分配一个 LUN（逻辑单元）。
+- `/iscsi/iqn.2024-04.com.kylin:file/tpg1/acls create iqn.2024-04.com.kylin:storage`：允许 `iqn.2024-04.com.kylin:storage` 主机访问该共享。
+
+#### 3. **配置防火墙允许 iSCSI 端口访问**
+
+iSCSI 默认使用 3260 端口（TCP），所以你需要打开该端口。
+
+**通过 `firewalld`（CentOS/RHEL 7 及以上版本）：**
+
+```
+firewall-cmd --zone=public --add-port=3260/tcp --permanent
+firewall-cmd --reload
+```
+
+- `--zone=public` 指定防火墙区域。
+- `--add-port=3260/tcp` 打开 3260 端口。
+- `--permanent` 使规则持久化。
+- `--reload` 重新加载防火墙规则。
+
+#### 4. **确认 iSCSI 服务是否正在运行**
+
+确保 iSCSI 服务已经启动，并能够接受连接。
+
+```
+systemctl start tgt
+systemctl enable tgt
+```
+
+### 客户端
+
+#### 1. **安装 iSCSI 客户端工具**
+
+首先，确保客户端安装了 iSCSI 客户端工具，如果没有安装，可以使用以下命令进行安装：
+
+```
+yum install iscsi-initiator-utils  # CentOS/RHEL
+```
+
+#### 2. **连接到 iSCSI 目标**
+
+- 使用 `iscsiadm` 命令连接到 iSCSI 目标服务器。假设 iSCSI 目标的 IP 地址为 `192.168.1.100`，并且目标名称为 `iqn.2024-04.com.kylin:file`。
+
+```
+# 发现 iSCSI 目标
+iscsiadm --mode discovery --type sendtargets --portal 192.168.1.100
+
+# 登录到目标
+iscsiadm --mode node --targetname iqn.2024-04.com.kylin:file --portal 192.168.1.100 --login
+```
+
+- 使用 `fdisk -l` 或 `lsblk` 检查 iSCSI 共享磁盘是否已正确连接，通常会显示为一个新的磁盘设备（例如 `/dev/sdb`）。
+
+```
+lsblk
+```
+
+
+
 ## NFS 服务
 
 ### 安装NFS
@@ -867,6 +954,31 @@ su omm && gsql -d postgres -p26000
 #### 报错[GAUSS-50201] : 找不到.bz2文件
 
 回到服务器的OpenGauss目录把压缩包修改成他想要的格式就行。
+
+## 创建 LVM 卷组
+
+```
+# 创建物理卷
+pvcreate /dev/sdb
+
+# 创建卷组 kylin_vg
+vgcreate kylin_vg /dev/sdb
+
+# 创建逻辑卷 kylin_lv，使用卷组 kylin_vg 中所有空间
+lvcreate -l 100%FREE -n kylin_lv kylin_vg
+
+# 格式化逻辑卷为 ext4 文件系统
+mkfs.ext4 /dev/kylin_vg/kylin_lv
+
+# 挂载逻辑卷 kylin_lv 到 /data/storage 目录
+mount /dev/kylin_vg/kylin_lv /data/storage
+
+# 编辑 fstab 文件
+vi /etc/fstab
+
+# 添加以下内容
+/dev/kylin_vg/kylin_lv  /data/storage  ext4  defaults  0  0
+```
 
 # 安装源配置
 
